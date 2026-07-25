@@ -1,18 +1,21 @@
-#include <vector>
+#pragma once 
+#include <map>
 #include <iostream>
+#include <cmath>
+#include "reader/playersnapshotreader.hpp"
 
 
 struct PlayerAnalytics {
     float distance = 0.0f;
-    float speed;
-    float acceleration;
+    float speed = 0.0f;
+    float acceleration = 0.0f;
 
     float intermediateDistance = 0.0f;
 };
 
 struct SnippetAnalytics
 {
-    std::vector<std::tuple<int,PlayerAnalytics>> player_analytics;
+  std::map<std::pair<int, int>, PlayerAnalytics> player_analytics;
 };
 
 class SnippetAnalyser {
@@ -22,9 +25,14 @@ SnippetAnalyser(){
 }
 ~SnippetAnalyser(){}
 
-void AnalyseSnippet(){}
+void AnalyseSnippet(PlayerSnapshot snapshot){
+    _currentSnapshot = snapshot;
+    CalculateDistance();
+}
 
 private:
-
+    PlayerSnapshot _currentSnapshot;
+    SnippetAnalytics _snippetAnalytics;
      void CalculateDistance();
+     float GetCartesianDistance(float x1, float y1, float x2, float y2);
   };
