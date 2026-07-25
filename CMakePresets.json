@@ -8,15 +8,22 @@
     "configurePresets": [
         {
             "name": "release",
-            "binaryDir": "${sourceDir}/build/",
-            "generator": "Ninja"
+            "displayName": "Release (GCC)",
+            "description": "Build using GCC and Unix Makefiles",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
         }
     ],
     "buildPresets": [
         {
             "name": "release",
-            "jobs": 8,
-            "configurePreset": "release"
+            "configurePreset": "release",
+            "jobs": 8
         }
     ]
 }
