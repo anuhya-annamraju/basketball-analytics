@@ -1,5 +1,5 @@
 #include "reader/playersnapshotreader.hpp"
-
+#include "analytics/SnippetAnalyser.hpp"
 #include <iostream>
 #include <filesystem>
 
@@ -25,6 +25,9 @@ int main(int argc, char* argv[]) {
                     << " | y: " << snapshot->y_m << '\n';
     }
 
+    auto snippet_analyser = std::make_unique<SnippetAnalyser>();
+
+    snippet_analyser->AnalyseSnippet();
 
     return 0;
 }
