@@ -1,4 +1,4 @@
-#include "reader/playersnapshotreader.hpp"
+#include "reader/PlayerSnapshotReader.hpp"
 #include "analytics/SnippetAnalyser.hpp"
 #include <iostream>
 #include <filesystem>

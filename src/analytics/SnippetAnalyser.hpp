@@ -2,7 +2,7 @@
 #include <map>
 #include <iostream>
 #include <cmath>
-#include "reader/playersnapshotreader.hpp"
+#include "reader/PlayerSnapshotReader.hpp"
 
 struct Pos
 {
