@@ -16,18 +16,21 @@ int main(int argc, char* argv[]) {
     }
 
     PlayerSnapshotReader reader(filename);
+    auto snippet_analyser = std::make_unique<SnippetAnalyser>();
 
     while (auto snapshot = reader.readNext()) {
         std::cout << "Time: " << snapshot->timestamp_ms
-                    << " | Player: " << snapshot->player_id
-                    << " | Group: " << snapshot->group_id
-                    << " | x: " << snapshot->x_m
-                    << " | y: " << snapshot->y_m << '\n';
+        << " | Player: " << snapshot->player_id
+        << " | Group: " << snapshot->group_id
+        << " | x: " << snapshot->x_m
+        << " | y: " << snapshot->y_m << '\n';
+        if(snapshot.has_value())
+        {
+            snippet_analyser->AnalyseSnippet(snapshot.value());
+        }
     }
 
-    auto snippet_analyser = std::make_unique<SnippetAnalyser>();
-
-    snippet_analyser->AnalyseSnippet();
+    snippet_analyser->DisplayAnalytics();
 
     return 0;
 }
