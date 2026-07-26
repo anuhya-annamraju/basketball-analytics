@@ -10,10 +10,9 @@ set(SOURCES
     src/analytics/SnippetAnalyser.cpp
     src/streamprocessor/StreamProcessor.cpp
 )
-# set(HEADERS
-#     src/reader/PlayerSnapshotReader.hpp
-#     src/analytics/SnippetAnalyser.hpp
-# )
+set(HEADERS
+    src/definitions/Definitions.hpp
+)
 
 include_directories(
     src
