@@ -1,5 +1,5 @@
 #pragma once
-#include "reader/playersnapshotreader.hpp"
+#include "reader/PlayerSnapshotReader.hpp"
 
 class StreamProcessor
 {
