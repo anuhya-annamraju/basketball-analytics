@@ -13,12 +13,12 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
     auto& playerAnalytics = _snippetAnalytics.player_analytics[{snapshot.group_id,snapshot.player_id}];
     
     // calculate distance
-    float step = GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics._prevPosX,playerAnalytics._prevPosY);
+    float step = GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics.prevPos.x_m,playerAnalytics.prevPos.y_m);
     playerAnalytics.distance += step;
 
     // calculate speed = distance/elapsed time
     // calculate acceleration = speed/elapsed time
-    auto dt = snapshot.timestamp_ms - playerAnalytics._prevTimestamp;
+    auto dt = snapshot.timestamp_ms - playerAnalytics.prevTimestamp;
     float currSpeed=0.0f;
     float accel= 0.0f;
     if(dt>0 && dt<=50)
@@ -27,9 +27,9 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
          accel = currSpeed - playerAnalytics.speed/(dt*1e-3); 
     }
 
-    playerAnalytics._prevPosX=snapshot.x_m;
-    playerAnalytics._prevPosY=snapshot.y_m;
-    playerAnalytics._prevTimestamp = snapshot.timestamp_ms;
+    playerAnalytics.prevPos.x_m = snapshot.x_m;
+    playerAnalytics.prevPos.y_m = snapshot.y_m;
+    playerAnalytics.prevTimestamp = snapshot.timestamp_ms;
     playerAnalytics.speed = currSpeed;
     playerAnalytics.acceleration = accel;
 }
@@ -45,4 +45,9 @@ void SnippetAnalyser::DisplayAnalytics()
                           "  Accel " << player.second.acceleration <<
                           std::endl;    
     }
+}
+
+void SnippetAnalyser::GetOverallAnalytics()
+{
+   
 }

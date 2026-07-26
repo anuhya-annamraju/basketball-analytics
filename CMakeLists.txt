@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCES
     src/reader/playersnapshotreader.cpp
     src/analytics/SnippetAnalyser.cpp
+    src/streamprocessor/StreamProcessor.cpp
 )
 set(HEADERS
     src/reader/playersnapshotreader.hpp
@@ -18,6 +19,7 @@ include_directories(
     src
     src/reader
     src/analytics
+    src/streamprocessor
 )
 add_library(basketball-lib ${SOURCES})
 add_executable(basketball-app src/main.cpp )
