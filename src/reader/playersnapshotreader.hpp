@@ -15,7 +15,6 @@ struct PlayerSnapshot {
 class PlayerSnapshotReader {
 public:
   explicit PlayerSnapshotReader(const std::string &filename);
-
   std::optional<PlayerSnapshot> readNext();
 
 private:

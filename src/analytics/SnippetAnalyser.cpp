@@ -1,8 +1,5 @@
 #include "SnippetAnalyser.hpp"
 
-
-void SnippetAnalyser::CalculateDistance(){}
-
 float SnippetAnalyser:: GetCartesianDistance(float x1, float y1, float x2, float y2)
 {                                      
     float dx = x2 - x1;                                                                                              
@@ -11,7 +8,41 @@ float SnippetAnalyser:: GetCartesianDistance(float x1, float y1, float x2, float
     return distance;
 }
 
-float SnippetAnalyser::GetCartesianSpeed(float distance, float dt)
+void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
+
+    auto& playerAnalytics = _snippetAnalytics.player_analytics[{snapshot.group_id,snapshot.player_id}];
+    
+    // calculate distance
+    float step = GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics._prevPosX,playerAnalytics._prevPosY);
+    playerAnalytics.distance += step;
+
+    // calculate speed = distance/elapsed time
+    // calculate acceleration = speed/elapsed time
+    auto dt = snapshot.timestamp_ms - playerAnalytics._prevTimestamp;
+    float currSpeed=0.0f;
+    float accel= 0.0f;
+    if(dt>0 && dt<=50)
+    {
+         currSpeed = step/(dt*1e-3);
+         accel = currSpeed - playerAnalytics.speed/(dt*1e-3); 
+    }
+
+    playerAnalytics._prevPosX=snapshot.x_m;
+    playerAnalytics._prevPosY=snapshot.y_m;
+    playerAnalytics._prevTimestamp = snapshot.timestamp_ms;
+    playerAnalytics.speed = currSpeed;
+    playerAnalytics.acceleration = accel;
+}
+
+void SnippetAnalyser::DisplayAnalytics()
 {
-    return distance/dt;
+    for (auto player: _snippetAnalytics.player_analytics)
+    {
+        std::cout << "[Group: " << player.first.first                                                                        
+                          << ", Player: " << player.first.second << "]"                                                              
+                          << " Distance: " << player.second.distance                                                                 
+                         << " Speed " << player.second.speed <<                                                            
+                          "  Accel " << player.second.acceleration <<
+                          std::endl;    
+    }
 }
