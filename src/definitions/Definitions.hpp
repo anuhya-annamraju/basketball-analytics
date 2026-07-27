@@ -26,9 +26,9 @@ struct PlayerAnalytics {
     float speed = 0.0f;
     float acceleration = 0.0f;
     int sprint_count = 0;
-    Pos prevPos;
-    float prevSpeed = 0.0f;
-    uint64_t prevTimestamp = 0.0f;
+    Pos prev_pos;
+    float prev_speed = 0.0f;
+    uint64_t prev_timestamp = 0.0f;
 };
 
 struct GroupAnalytics

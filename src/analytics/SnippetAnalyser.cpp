@@ -15,12 +15,12 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
     auto& playerAnalytics = groupAnalytics.player_analytics[snapshot.player_id];
     
     // calculate distance
-    float step = GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics.prevPos.x_m,playerAnalytics.prevPos.y_m);
+    float step = GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics.prev_pos.x_m,playerAnalytics.prev_pos.y_m);
     playerAnalytics.distance += step;
 
     // calculate speed = distance/elapsed time
     // calculate acceleration = speed/elapsed time
-    auto dt = snapshot.timestamp_ms - playerAnalytics.prevTimestamp;
+    auto dt = snapshot.timestamp_ms - playerAnalytics.prev_timestamp;
     float currSpeed=0.0f;
     float accel= 0.0f;
     if(dt>0 && dt<=50)
@@ -28,16 +28,16 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
          currSpeed = step/(dt*1e-3);
          accel = currSpeed - playerAnalytics.speed/(dt*1e-3); 
     }
-    playerAnalytics.prevPos.x_m = snapshot.x_m;
-    playerAnalytics.prevPos.y_m = snapshot.y_m;
-    playerAnalytics.prevTimestamp = snapshot.timestamp_ms;
+    playerAnalytics.prev_pos.x_m = snapshot.x_m;
+    playerAnalytics.prev_pos.y_m = snapshot.y_m;
+    playerAnalytics.prev_timestamp = snapshot.timestamp_ms;
     playerAnalytics.speed = currSpeed;
     playerAnalytics.acceleration = accel;
     playerAnalytics.player_id = snapshot.player_id;
     groupAnalytics.group_id = snapshot.group_id;
 
     //From current snapshot calculate heatmap grid index from position
-    UpdateHeatMapGrid(playerAnalytics.prevPos,groupAnalytics);
+    UpdateHeatMapGrid(playerAnalytics.prev_pos,groupAnalytics);
 }
 
 void SnippetAnalyser::DisplayAnalytics()
