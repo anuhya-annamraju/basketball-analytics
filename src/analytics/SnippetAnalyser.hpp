@@ -16,7 +16,8 @@ public:
 private:
     PlayerSnapshot _currentSnapshot ;
     SnippetAnalytics _snippetAnalytics;
-    GroupAnalytics _groupAnalytics;
     void GetOverallAnalytics();
     float GetCartesianDistance(float x1, float y1, float x2, float y2);
+    void CalculateHeatMap(const GroupAnalytics& groupAnalytics);
+    void UpdateHeatMapGrid(const Pos& pos, GroupAnalytics& groupAnalytics);
   };
