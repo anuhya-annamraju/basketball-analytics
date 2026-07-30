@@ -1,12 +1,5 @@
 #include "SnippetAnalyser.hpp"
 
-float SnippetAnalyser:: GetCartesianDistance(float x1, float y1, float x2, float y2)
-{                                      
-    float dx = x2 - x1;                                                                                              
-    float dy = y2 - y1;                                                                                              
-    float distance = std::hypot(dx, dy);  
-    return distance;
-}
 
 void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
 
@@ -15,19 +8,16 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
     auto& playerAnalytics = groupAnalytics.player_analytics[snapshot.player_id];
     
     // calculate distance
-    float step = GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics.prev_pos.x_m,playerAnalytics.prev_pos.y_m);
+    float step = PhysicsUtils::GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics.prev_pos.x_m,playerAnalytics.prev_pos.y_m);
     playerAnalytics.distance += step;
 
     // calculate speed = distance/elapsed time
     // calculate acceleration = speed/elapsed time
     auto dt = snapshot.timestamp_ms - playerAnalytics.prev_timestamp;
-    float currSpeed=0.0f;
-    float accel= 0.0f;
-    if(dt>0 && dt<=50)
-    {
-         currSpeed = step/(dt*1e-3);
-         accel = currSpeed - playerAnalytics.speed/(dt*1e-3); 
-    }
+
+    float currSpeed = PhysicsUtils::CalculateSpeed(step, dt);
+    float accel = PhysicsUtils::CalculateAcceleration(currSpeed,playerAnalytics.speed,dt);
+    
     playerAnalytics.prev_pos.x_m = snapshot.x_m;
     playerAnalytics.prev_pos.y_m = snapshot.y_m;
     playerAnalytics.prev_timestamp = snapshot.timestamp_ms;
@@ -52,9 +42,9 @@ void SnippetAnalyser::DisplayAnalytics()
             auto player_details = player.second;
              std::cout << "[Group: " << grpId                                                                        
                           << ", Player Id : " << player.first << "]"                                                              
-                          << " Distance: " << player_details.distance                                                                 
-                         << " Speed " << player_details.speed <<                                                            
-                          "  Accel " << player_details.acceleration <<
+                          << " Distance: " << player_details.distance  << " (m)"                                                               
+                         << " Speed " << player_details.speed << " (m/s)"                                                           
+                          "  Accel " << player_details.acceleration << " (m/s2)" << 
                           std::endl;    
         }
     CalculateHeatMap(group.second);

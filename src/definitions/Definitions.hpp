@@ -20,6 +20,14 @@ struct HeatMap
     int position_distributuion[GRID_COLS][GRID_ROWS]={0};
 };
 
+struct SpeedBucket
+{
+    float standing = 0.0f;
+    float walking = 0.0f;
+    float jogging = 0.0f;
+    float sprinting = 0.0f;
+};
+
 struct PlayerAnalytics {
     int player_id = 0;
     float distance = 0.0f;

@@ -13,6 +13,7 @@ set(SOURCES
 )
 set(HEADERS
     src/definitions/Definitions.hpp
+    src/utils/PhysicsUtils.hpp
 )
 
 include_directories(
@@ -20,9 +21,10 @@ include_directories(
     src/reader
     src/analytics
     src/streamprocessor
+    src/utils
 )
 
-add_library(basketball-lib ${SOURCES})
+add_library(basketball-lib ${SOURCES} ${HEADERS})
 add_executable(basketball-app src/main.cpp)
 target_link_libraries(basketball-app PRIVATE basketball-lib)
 
