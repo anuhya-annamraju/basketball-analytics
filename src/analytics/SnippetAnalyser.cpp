@@ -49,7 +49,6 @@ void SnippetAnalyser::DisplayAnalytics()
         }
     CalculateHeatMap(group.second);
     }
-
 }
 
 void SnippetAnalyser::GetOverallAnalytics()
@@ -84,7 +83,7 @@ void SnippetAnalyser::UpdateHeatMapGrid(const Pos& pos,GroupAnalytics& groupAnal
    i += GRID_COLS/2;
    j += GRID_ROWS/2;
                                                                            
-    std::cout << " pos is " << pos.x_m << "," << pos.y_m << " grid is " << i << "," << j << std::endl;
+   // std::cout << " pos is " << pos.x_m << "," << pos.y_m << " grid is " << i << "," << j << std::endl;
     // 2. Check bounds                                                                                                          
     if (i >= 0 && i < GRID_COLS && j >= 0 && j < GRID_ROWS) {                                                           
         groupAnalytics.heatmap.position_distributuion[i][j] += 1;                                                                                               

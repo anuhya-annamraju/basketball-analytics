@@ -1,5 +1,4 @@
-#include "playersnapshotreader.hpp"
-
+#include "PlayerSnapshotReader.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -45,6 +44,6 @@ std::optional<PlayerSnapshot> PlayerSnapshotReader::readNext() {
 PlayerSnapshotReader::PlayerSnapshotReader(const std::string &filename)
     : file_(filename), isFirstLine_(true) {
   if (!file_.is_open()) {
-    throw std::runtime_error("Failed to open file: " + filename);
+    throw std::runtime_error("Failed to open file:: " + filename);
   }
 }
