@@ -359,6 +359,8 @@ const char* AnalyticsServer::GetIndexHtml()
         </div>
     </div>
 
+    )rawhtml"
+    R"rawhtml(
     <script>
         const COLOR_PALETTE = [
             '#38bdf8', '#f43f5e', '#10b981', '#fbbf24', 
