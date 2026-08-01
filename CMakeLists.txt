@@ -42,7 +42,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(doctest)
 
 enable_testing()
-add_executable(unit_tests tests/TestAnalyticsAlgorithms.cpp)
+add_executable(unit_tests
+    tests/TestAnalyticsAlgorithms.cpp
+    tests/TestHeatMapAnalytics.cpp
+)
 target_link_libraries(unit_tests PRIVATE basketball-lib doctest::doctest)
 
 # Add cpp-httplib for cross-platform web server

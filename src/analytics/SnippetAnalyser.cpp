@@ -75,19 +75,16 @@ void SnippetAnalyser::CalculateHeatMap(const GroupAnalytics& groupAnalytics){
     }
 }
 
-void SnippetAnalyser::UpdateHeatMapGrid(const Pos& pos,GroupAnalytics& groupAnalytics)
+void SnippetAnalyser::UpdateHeatMapGrid(const Pos& pos, GroupAnalytics& groupAnalytics)
 {
     groupAnalytics.heatmap.total_count += 1;
     
-   int i = (pos.x_m>0)? std::ceil(pos.x_m): std::floor(pos.x_m);
-   int j = (pos.y_m>0)? std::ceil(pos.y_m): std::floor(pos.y_m);
+    int col = static_cast<int>(((pos.x_m + COURT_LENGTH / 2.0f) / COURT_LENGTH) * GRID_COLS);
+    int row = static_cast<int>(((pos.y_m + COURT_WIDTH / 2.0f) / COURT_WIDTH) * GRID_ROWS);
 
-   i += GRID_COLS/2;
-   j += GRID_ROWS/2;
-                                                                           
-   // std::cout << " pos is " << pos.x_m << "," << pos.y_m << " grid is " << i << "," << j << std::endl;
-    // 2. Check bounds                                                                                                          
-    if (i >= 0 && i < GRID_COLS && j >= 0 && j < GRID_ROWS) {                                                           
-        groupAnalytics.heatmap.position_distributuion[i][j] += 1;                                                                                               
-    }                                                                                                                                               
+    // Clamp bounds safely
+    col = std::max(0, std::min(GRID_COLS - 1, col));
+    row = std::max(0, std::min(GRID_ROWS - 1, row));
+
+    groupAnalytics.heatmap.position_distributuion[col][row] += 1;
 }

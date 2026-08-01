@@ -25,11 +25,12 @@ public:
     void OnSnapshotReceived(const PlayerSnapshot& snapshot) override {                                                                          
         AnalyseSnippet(snapshot);                                                                                                               
     } 
+    void UpdateHeatMapGrid(const Pos& pos, GroupAnalytics& groupAnalytics);
+
 private:
     PlayerSnapshot _currentSnapshot ;
     SnippetAnalytics _snippetAnalytics; 
     std::vector<AnalyticsCallback> _analyticsCallbacks;
     void GetOverallAnalytics();
     void CalculateHeatMap(const GroupAnalytics& groupAnalytics);
-    void UpdateHeatMapGrid(const Pos& pos, GroupAnalytics& groupAnalytics);
   };
