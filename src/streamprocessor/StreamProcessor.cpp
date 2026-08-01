@@ -18,7 +18,7 @@ void StreamProcessor::StreamData()
 {                                                                                                                                      
     while (auto snapshot = _snapshotReader->readNext()) {                                                                                       
         if (snapshot.has_value()) {                                                                                                             
-            // Notify all subscribers automatically!                                                                                            
+            // Notify subscribers automatically                                                                                            
             for (const auto& listener : _listeners) {                                                                                           
                 listener(snapshot.value());                                                                                                     
             }                                                                                                                                   

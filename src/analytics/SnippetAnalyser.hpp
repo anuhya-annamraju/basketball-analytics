@@ -31,6 +31,5 @@ private:
     PlayerSnapshot _currentSnapshot ;
     SnippetAnalytics _snippetAnalytics; 
     std::vector<AnalyticsCallback> _analyticsCallbacks;
-    void GetOverallAnalytics();
     void CalculateHeatMap(const GroupAnalytics& groupAnalytics);
   };

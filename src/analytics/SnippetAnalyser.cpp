@@ -11,8 +11,8 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
     float step = PhysicsUtils::GetCartesianDistance(snapshot.x_m,snapshot.y_m,playerAnalytics.prev_pos.x_m,playerAnalytics.prev_pos.y_m);
     playerAnalytics.distance += step;
 
-    // calculate speed = distance/elapsed time
-    // calculate acceleration = speed/elapsed time
+    // calculate speed = step_distance/elapsed time
+    // calculate acceleration = diff(speed)/elapsed time
     auto dt = snapshot.timestamp_ms - playerAnalytics.prev_timestamp;
 
     float currSpeed = PhysicsUtils::CalculateSpeed(step, dt);
@@ -55,8 +55,6 @@ void SnippetAnalyser::DisplayAnalytics()
     CalculateHeatMap(group.second);
     }
 }
-
-void SnippetAnalyser::GetOverallAnalytics(){}
 
 void SnippetAnalyser::CalculateHeatMap(const GroupAnalytics& groupAnalytics){
     // if total no of samples is 100% - then calculate value of each heatmap grid in % 
