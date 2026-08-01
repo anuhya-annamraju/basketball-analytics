@@ -230,18 +230,38 @@ const char* AnalyticsServer::GetIndexHtml()
             height: 360px;
             width: 100%;
         }
-        .placeholder-card {
-            border: 2px dashed #334155;
-            border-radius: 12px;
-            padding: 32px;
-            text-align: center;
-            color: #64748b;
-            background: rgba(30, 41, 59, 0.4);
+        .court-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .placeholder-card h3 {
+        canvas#courtCanvas {
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+            height: auto;
+        }
+        .court-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 12px;
+            font-size: 0.85rem;
             color: #94a3b8;
-            font-size: 1.1rem;
-            margin-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -282,10 +302,29 @@ const char* AnalyticsServer::GetIndexHtml()
         <!-- Dynamic Group Chart Cards are inserted here -->
     </div>
 
-    <!-- BOTTOM SECTION PLACEHOLDER FOR STEP 2 (FIELD & HEATMAP) -->
-    <div class="placeholder-card">
-        <h3>🏀 2D Basketball Field & Speed Heatmap</h3>
-        <p>Step 2 visualization target: Live player positions on court grid & heatmap density.</p>
+    <!-- BOTTOM SECTION: LIVE 2D BASKETBALL COURT & HEATMAP POSITION DISTRIBUTION -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2>🏀 2D Basketball Court & Position Heatmap (Real-Time)</h2>
+            <span class="group-badge">Center (0,0) | X: [-14.35m, +14.35m] | Y: [-7.6m, +7.6m]</span>
+        </div>
+        <div class="court-container">
+            <canvas id="courtCanvas" width="960" height="520"></canvas>
+            <div class="court-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: rgba(251, 191, 36, 0.4); border: 1px solid #fbbf24;"></div>
+                    <span>Position Heatmap Density</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #38bdf8; border-radius: 50%;"></div>
+                    <span>Live Player Positions</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ef4444;"></div>
+                    <span>Center Origin (0,0)</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -305,15 +344,24 @@ const char* AnalyticsServer::GetIndexHtml()
             return playerColorMap[playerId];
         }
 
-        const groupCharts = {}; // Map of groupId -> Chart instance
+        const groupCharts = {};
         let packetTotal = 0;
         const playerSet = new Set();
         const groupSet = new Set();
 
+        // Heatmap Grid (28 cols x 15 rows)
+        const GRID_COLS = 28;
+        const GRID_ROWS = 15;
+        const heatmapGrid = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(0));
+        let maxHeatCount = 1;
+
+        // Position Trails & Live Positions
+        const positionDots = []; // Array of {x, y, color}
+        const livePlayerPositions = {}; // Map of playerId -> {x, y, group_id, color}
+
         function createGroupChart(groupId) {
             const gridContainer = document.getElementById('groupChartsGrid');
 
-            // Create Section Card
             const card = document.createElement('div');
             card.className = 'section-card';
             card.id = `group_card_${groupId}`;
@@ -357,10 +405,7 @@ const char* AnalyticsServer::GetIndexHtml()
                         legend: {
                             labels: { color: '#f8fafc', font: { family: 'Inter', size: 12 } }
                         },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
+                        tooltip: { mode: 'index', intersect: false }
                     }
                 }
             });
@@ -368,6 +413,186 @@ const char* AnalyticsServer::GetIndexHtml()
             groupCharts[groupId] = chart;
             return chart;
         }
+
+        // --- 2D BASKETBALL COURT RENDERER ---
+        const courtCanvas = document.getElementById('courtCanvas');
+        const courtCtx = courtCanvas.getContext('2d');
+
+        const COURT_LENGTH_M = 28.7;
+        const COURT_WIDTH_M = 15.2;
+
+        function metersToCanvas(x_m, y_m) {
+            const marginX = 50;
+            const marginY = 40;
+            const drawWidth = courtCanvas.width - 2 * marginX;
+            const drawHeight = courtCanvas.height - 2 * marginY;
+
+            // Center (0,0) is at exact canvas center
+            const canvasX = courtCanvas.width / 2 + (x_m / (COURT_LENGTH_M / 2)) * (drawWidth / 2);
+            const canvasY = courtCanvas.height / 2 - (y_m / (COURT_WIDTH_M / 2)) * (drawHeight / 2);
+
+            return { x: canvasX, y: canvasY };
+        }
+
+        function drawCourt() {
+            const w = courtCanvas.width;
+            const h = courtCanvas.height;
+
+            // Clear Background
+            courtCtx.fillStyle = '#0f172a';
+            courtCtx.fillRect(0, 0, w, h);
+
+            const marginX = 50;
+            const marginY = 40;
+            const drawW = w - 2 * marginX;
+            const drawH = h - 2 * marginY;
+
+            // 1. Draw Heatmap Grid Density
+            const cellW = drawW / GRID_COLS;
+            const cellH = drawH / GRID_ROWS;
+
+            for (let c = 0; c < GRID_COLS; c++) {
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    const count = heatmapGrid[c][r];
+                    if (count > 0) {
+                        const alpha = Math.min(0.85, (count / maxHeatCount) * 0.8 + 0.1);
+                        const cellX = marginX + c * cellW;
+                        const cellY = marginY + (GRID_ROWS - 1 - r) * cellH;
+
+                        // Warm Heatmap Color (Yellow to Orange to Red)
+                        const ratio = count / maxHeatCount;
+                        const red = 255;
+                        const green = Math.floor(255 * (1 - ratio * 0.7));
+                        const blue = Math.floor(50 * (1 - ratio));
+
+                        courtCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+                        courtCtx.fillRect(cellX, cellY, cellW, cellH);
+                    }
+                }
+            }
+
+            // 2. Draw Court Boundary & Grid Lines
+            courtCtx.strokeStyle = '#334155';
+            courtCtx.lineWidth = 1;
+
+            // Grid lines
+            for (let c = 0; c <= GRID_COLS; c++) {
+                const gx = marginX + c * cellW;
+                courtCtx.beginPath();
+                courtCtx.moveTo(gx, marginY);
+                courtCtx.lineTo(gx, marginY + drawH);
+                courtCtx.stroke();
+            }
+            for (let r = 0; r <= GRID_ROWS; r++) {
+                const gy = marginY + r * cellH;
+                courtCtx.beginPath();
+                courtCtx.moveTo(marginX, gy);
+                courtCtx.lineTo(marginX + drawW, gy);
+                courtCtx.stroke();
+            }
+
+            // Outer Boundary
+            courtCtx.strokeStyle = '#94a3b8';
+            courtCtx.lineWidth = 3;
+            courtCtx.strokeRect(marginX, marginY, drawW, drawH);
+
+            // Half-Court Line
+            const centerX = w / 2;
+            courtCtx.beginPath();
+            courtCtx.moveTo(centerX, marginY);
+            courtCtx.lineTo(centerX, marginY + drawH);
+            courtCtx.stroke();
+
+            // Center Circle at (0,0)
+            const centerPos = metersToCanvas(0, 0);
+            const circleRadius = (1.8 / (COURT_LENGTH_M / 2)) * (drawW / 2);
+
+            courtCtx.beginPath();
+            courtCtx.arc(centerPos.x, centerPos.y, circleRadius, 0, 2 * Math.PI);
+            courtCtx.stroke();
+
+            // Center Origin Crosshair (0,0)
+            courtCtx.strokeStyle = '#ef4444';
+            courtCtx.lineWidth = 2;
+            courtCtx.beginPath();
+            courtCtx.arc(centerPos.x, centerPos.y, 4, 0, 2 * Math.PI);
+            courtCtx.fillStyle = '#ef4444';
+            courtCtx.fill();
+
+            // Key Areas (Paint)
+            const keyW = (5.8 / COURT_LENGTH_M) * drawW;
+            const keyH = (4.9 / COURT_WIDTH_M) * drawH;
+            const keyY = marginY + (drawH - keyH) / 2;
+
+            courtCtx.strokeStyle = '#94a3b8';
+            courtCtx.lineWidth = 2;
+            // Left Key
+            courtCtx.strokeRect(marginX, keyY, keyW, keyH);
+            // Right Key
+            courtCtx.strokeRect(marginX + drawW - keyW, keyY, keyW, keyH);
+
+            // Axis Labels & Title
+            courtCtx.fillStyle = '#64748b';
+            courtCtx.font = '11px Inter, sans-serif';
+            courtCtx.textAlign = 'center';
+
+            // X Axis Labels
+            courtCtx.fillText('-14.35m', marginX, marginY - 10);
+            courtCtx.fillText('0 (Center)', centerX, marginY - 10);
+            courtCtx.fillText('+14.35m', marginX + drawW, marginY - 10);
+
+            // Y Axis Labels
+            courtCtx.textAlign = 'right';
+            courtCtx.fillText('+7.6m', marginX - 10, marginY + 12);
+            courtCtx.fillText('0', marginX - 10, centerPos.y + 4);
+            courtCtx.fillText('-7.6m', marginX - 10, marginY + drawH);
+
+            // 3. Draw Real-Time Position Trail Dots
+            for (let i = 0; i < positionDots.length; i++) {
+                const dot = positionDots[i];
+                const pt = metersToCanvas(dot.x, dot.y);
+                const alpha = (i / positionDots.length) * 0.6 + 0.2;
+
+                courtCtx.beginPath();
+                courtCtx.arc(pt.x, pt.y, 3, 0, 2 * Math.PI);
+                courtCtx.fillStyle = dot.color;
+                courtCtx.globalAlpha = alpha;
+                courtCtx.fill();
+            }
+            courtCtx.globalAlpha = 1.0;
+
+            // 4. Draw Current Live Moving Player Markers
+            for (const pid in livePlayerPositions) {
+                const p = livePlayerPositions[pid];
+                const pt = metersToCanvas(p.x, p.y);
+
+                // Outer Glowing Ring
+                courtCtx.beginPath();
+                courtCtx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
+                courtCtx.fillStyle = p.color;
+                courtCtx.globalAlpha = 0.3;
+                courtCtx.fill();
+
+                // Inner Solid Dot
+                courtCtx.globalAlpha = 1.0;
+                courtCtx.beginPath();
+                courtCtx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                courtCtx.fillStyle = p.color;
+                courtCtx.strokeStyle = '#ffffff';
+                courtCtx.lineWidth = 2;
+                courtCtx.fill();
+                courtCtx.stroke();
+
+                // Player ID Label
+                courtCtx.fillStyle = '#ffffff';
+                courtCtx.font = 'bold 11px Inter, sans-serif';
+                courtCtx.textAlign = 'center';
+                courtCtx.fillText(`P${pid}`, pt.x, pt.y - 14);
+            }
+        }
+
+        // Initial Draw
+        drawCourt();
 
         const eventSource = new EventSource('/events');
 
@@ -395,13 +620,12 @@ const char* AnalyticsServer::GetIndexHtml()
             document.getElementById('activeGroupsCount').innerText = groupSet.size;
             document.getElementById('latestTime').innerText = timeSec + 's';
 
-            // Get or create chart for this group
+            // 1. Update Group Acceleration Line Charts (Top Half)
             let chart = groupCharts[data.group_id];
             if (!chart) {
                 chart = createGroupChart(data.group_id);
             }
 
-            // Find or create dataset for player in this group's chart
             let dataset = chart.data.datasets.find(ds => ds.label === `Player ${data.player_id}`);
             if (!dataset) {
                 const color = getPlayerColor(data.player_id);
@@ -417,15 +641,38 @@ const char* AnalyticsServer::GetIndexHtml()
                 chart.data.datasets.push(dataset);
             }
 
-            // Append new acceleration point
             dataset.data.push({ x: parseFloat(timeSec), y: parseFloat(data.acceleration.toFixed(2)) });
+            if (dataset.data.length > 60) dataset.data.shift();
+            chart.update('none');
 
-            // Sliding window: keep last 60 points per player
-            if (dataset.data.length > 60) {
-                dataset.data.shift();
+            // 2. Update 2D Court & Heatmap Position Distribution (Bottom Half)
+            const playerColor = getPlayerColor(data.player_id);
+
+            // Update live player position
+            livePlayerPositions[data.player_id] = {
+                x: data.x_m,
+                y: data.y_m,
+                group: data.group_id,
+                color: playerColor
+            };
+
+            // Increment Heatmap Grid cell count
+            // Map x_m [-14.35, +14.35] -> col [0, 27]
+            // Map y_m [-7.6, +7.6] -> row [0, 14]
+            const col = Math.min(GRID_COLS - 1, Math.max(0, Math.floor(((data.x_m + COURT_LENGTH_M / 2) / COURT_LENGTH_M) * GRID_COLS)));
+            const row = Math.min(GRID_ROWS - 1, Math.max(0, Math.floor(((data.y_m + COURT_WIDTH_M / 2) / COURT_WIDTH_M) * GRID_ROWS)));
+            
+            heatmapGrid[col][row]++;
+            if (heatmapGrid[col][row] > maxHeatCount) {
+                maxHeatCount = heatmapGrid[col][row];
             }
 
-            chart.update('none');
+            // Append to position trail dots (keep last 300 real-time dots)
+            positionDots.push({ x: data.x_m, y: data.y_m, color: playerColor });
+            if (positionDots.length > 300) positionDots.shift();
+
+            // Re-render 2D Court Canvas
+            drawCourt();
         };
     </script>
 </body>
