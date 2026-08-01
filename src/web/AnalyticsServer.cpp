@@ -80,7 +80,8 @@ void AnalyticsServer::BroadcastAnalytics(const PlayerSnapshot& snapshot, const P
        << "\"x_m\":" << snapshot.x_m << ","
        << "\"y_m\":" << snapshot.y_m << ","
        << "\"speed\":" << analytics.speed << ","
-       << "\"acceleration\":" << analytics.acceleration
+       << "\"acceleration\":" << analytics.acceleration << ","
+       << "\"distance\":" << analytics.distance
        << "}\n\n";
 
     std::string message = ss.str();
@@ -210,7 +211,7 @@ const char* AnalyticsServer::GetIndexHtml()
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
         .section-header h2 {
             font-size: 1.1rem;
@@ -224,6 +225,37 @@ const char* AnalyticsServer::GetIndexHtml()
             border-radius: 6px;
             font-size: 0.8rem;
             font-weight: 600;
+        }
+        .player-distance-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding: 10px 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 8px;
+        }
+        .player-dist-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #94a3b8;
+            background: #1e293b;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+        .player-dist-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .player-dist-val {
+            color: #38bdf8;
+            font-weight: 700;
         }
         .chart-container {
             position: relative;
@@ -297,9 +329,9 @@ const char* AnalyticsServer::GetIndexHtml()
         </div>
     </div>
 
-    <!-- TOP SECTION: LIVE 2D ACCELERATION PLOTS BY GROUP -->
+    <!-- TOP SECTION: LIVE 2D ACCELERATION PLOTS BY GROUP WITH PLAYER DISTANCES -->
     <div id="groupChartsGrid" class="charts-grid">
-        <!-- Dynamic Group Chart Cards are inserted here -->
+        <!-- Dynamic Group Chart Cards with live player distance telemetry are inserted here -->
     </div>
 
     <!-- BOTTOM SECTION: LIVE 2D BASKETBALL COURT & HEATMAP POSITION DISTRIBUTION -->
@@ -356,8 +388,8 @@ const char* AnalyticsServer::GetIndexHtml()
         let maxHeatCount = 1;
 
         // Position Trails & Live Positions
-        const positionDots = []; // Array of {x, y, color}
-        const livePlayerPositions = {}; // Map of playerId -> {x, y, group_id, color}
+        const positionDots = [];
+        const livePlayerPositions = {};
 
         function createGroupChart(groupId) {
             const gridContainer = document.getElementById('groupChartsGrid');
@@ -370,6 +402,9 @@ const char* AnalyticsServer::GetIndexHtml()
                 <div class="section-header">
                     <h2>📈 Group ${groupId} - Player Accelerations (m/s²)</h2>
                     <span class="group-badge">Group ${groupId}</span>
+                </div>
+                <div class="player-distance-bar" id="playerDistances_group_${groupId}">
+                    <!-- Live Player Distance Telemetry Chips -->
                 </div>
                 <div class="chart-container">
                     <canvas id="accelChart_group_${groupId}"></canvas>
@@ -427,7 +462,6 @@ const char* AnalyticsServer::GetIndexHtml()
             const drawWidth = courtCanvas.width - 2 * marginX;
             const drawHeight = courtCanvas.height - 2 * marginY;
 
-            // Center (0,0) is at exact canvas center
             const canvasX = courtCanvas.width / 2 + (x_m / (COURT_LENGTH_M / 2)) * (drawWidth / 2);
             const canvasY = courtCanvas.height / 2 - (y_m / (COURT_WIDTH_M / 2)) * (drawHeight / 2);
 
@@ -438,7 +472,6 @@ const char* AnalyticsServer::GetIndexHtml()
             const w = courtCanvas.width;
             const h = courtCanvas.height;
 
-            // Clear Background
             courtCtx.fillStyle = '#0f172a';
             courtCtx.fillRect(0, 0, w, h);
 
@@ -459,7 +492,6 @@ const char* AnalyticsServer::GetIndexHtml()
                         const cellX = marginX + c * cellW;
                         const cellY = marginY + (GRID_ROWS - 1 - r) * cellH;
 
-                        // Warm Heatmap Color (Yellow to Orange to Red)
                         const ratio = count / maxHeatCount;
                         const red = 255;
                         const green = Math.floor(255 * (1 - ratio * 0.7));
@@ -475,7 +507,6 @@ const char* AnalyticsServer::GetIndexHtml()
             courtCtx.strokeStyle = '#334155';
             courtCtx.lineWidth = 1;
 
-            // Grid lines
             for (let c = 0; c <= GRID_COLS; c++) {
                 const gx = marginX + c * cellW;
                 courtCtx.beginPath();
@@ -519,35 +550,30 @@ const char* AnalyticsServer::GetIndexHtml()
             courtCtx.fillStyle = '#ef4444';
             courtCtx.fill();
 
-            // Key Areas (Paint)
+            // Key Areas
             const keyW = (5.8 / COURT_LENGTH_M) * drawW;
             const keyH = (4.9 / COURT_WIDTH_M) * drawH;
             const keyY = marginY + (drawH - keyH) / 2;
 
             courtCtx.strokeStyle = '#94a3b8';
             courtCtx.lineWidth = 2;
-            // Left Key
             courtCtx.strokeRect(marginX, keyY, keyW, keyH);
-            // Right Key
             courtCtx.strokeRect(marginX + drawW - keyW, keyY, keyW, keyH);
 
-            // Axis Labels & Title
+            // Axis Labels
             courtCtx.fillStyle = '#64748b';
             courtCtx.font = '11px Inter, sans-serif';
             courtCtx.textAlign = 'center';
-
-            // X Axis Labels
             courtCtx.fillText('-14.35m', marginX, marginY - 10);
             courtCtx.fillText('0 (Center)', centerX, marginY - 10);
             courtCtx.fillText('+14.35m', marginX + drawW, marginY - 10);
 
-            // Y Axis Labels
             courtCtx.textAlign = 'right';
             courtCtx.fillText('+7.6m', marginX - 10, marginY + 12);
             courtCtx.fillText('0', marginX - 10, centerPos.y + 4);
             courtCtx.fillText('-7.6m', marginX - 10, marginY + drawH);
 
-            // 3. Draw Real-Time Position Trail Dots
+            // 3. Position Trail Dots
             for (let i = 0; i < positionDots.length; i++) {
                 const dot = positionDots[i];
                 const pt = metersToCanvas(dot.x, dot.y);
@@ -561,19 +587,17 @@ const char* AnalyticsServer::GetIndexHtml()
             }
             courtCtx.globalAlpha = 1.0;
 
-            // 4. Draw Current Live Moving Player Markers
+            // 4. Live Moving Player Markers with Total Distance Label
             for (const pid in livePlayerPositions) {
                 const p = livePlayerPositions[pid];
                 const pt = metersToCanvas(p.x, p.y);
 
-                // Outer Glowing Ring
                 courtCtx.beginPath();
                 courtCtx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
                 courtCtx.fillStyle = p.color;
                 courtCtx.globalAlpha = 0.3;
                 courtCtx.fill();
 
-                // Inner Solid Dot
                 courtCtx.globalAlpha = 1.0;
                 courtCtx.beginPath();
                 courtCtx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
@@ -583,15 +607,15 @@ const char* AnalyticsServer::GetIndexHtml()
                 courtCtx.fill();
                 courtCtx.stroke();
 
-                // Player ID Label
+                // Player ID & Live Distance Label
                 courtCtx.fillStyle = '#ffffff';
                 courtCtx.font = 'bold 11px Inter, sans-serif';
                 courtCtx.textAlign = 'center';
-                courtCtx.fillText(`P${pid}`, pt.x, pt.y - 14);
+                const distStr = p.distance ? ` (${p.distance.toFixed(1)}m)` : '';
+                courtCtx.fillText(`P${pid}${distStr}`, pt.x, pt.y - 14);
             }
         }
 
-        // Initial Draw
         drawCourt();
 
         const eventSource = new EventSource('/events');
@@ -626,11 +650,31 @@ const char* AnalyticsServer::GetIndexHtml()
                 chart = createGroupChart(data.group_id);
             }
 
-            let dataset = chart.data.datasets.find(ds => ds.label === `Player ${data.player_id}`);
+            const distValStr = (data.distance !== undefined) ? data.distance.toFixed(1) + 'm' : '0.0m';
+
+            // Update or create Live Player Distance Chip in the Group Header Bar
+            let distBar = document.getElementById(`playerDistances_group_${data.group_id}`);
+            if (distBar) {
+                let chip = document.getElementById(`distChip_${data.group_id}_${data.player_id}`);
+                if (!chip) {
+                    chip = document.createElement('div');
+                    chip.className = 'player-dist-chip';
+                    chip.id = `distChip_${data.group_id}_${data.player_id}`;
+                    distBar.appendChild(chip);
+                }
+                const color = getPlayerColor(data.player_id);
+                chip.innerHTML = `<span class="player-dist-dot" style="background:${color};"></span>` +
+                                 `<span>Player ${data.player_id}:</span>` +
+                                 `<span class="player-dist-val">${distValStr}</span>`;
+            }
+
+            // Update Chart Dataset with live distance label
+            let dataset = chart.data.datasets.find(ds => ds.playerId === data.player_id);
             if (!dataset) {
                 const color = getPlayerColor(data.player_id);
                 dataset = {
-                    label: `Player ${data.player_id}`,
+                    label: `Player ${data.player_id} (${distValStr})`,
+                    playerId: data.player_id,
                     data: [],
                     borderColor: color,
                     backgroundColor: color,
@@ -639,6 +683,8 @@ const char* AnalyticsServer::GetIndexHtml()
                     tension: 0.2
                 };
                 chart.data.datasets.push(dataset);
+            } else {
+                dataset.label = `Player ${data.player_id} (${distValStr})`;
             }
 
             dataset.data.push({ x: parseFloat(timeSec), y: parseFloat(data.acceleration.toFixed(2)) });
@@ -648,17 +694,14 @@ const char* AnalyticsServer::GetIndexHtml()
             // 2. Update 2D Court & Heatmap Position Distribution (Bottom Half)
             const playerColor = getPlayerColor(data.player_id);
 
-            // Update live player position
             livePlayerPositions[data.player_id] = {
                 x: data.x_m,
                 y: data.y_m,
                 group: data.group_id,
-                color: playerColor
+                color: playerColor,
+                distance: data.distance || 0.0
             };
 
-            // Increment Heatmap Grid cell count
-            // Map x_m [-14.35, +14.35] -> col [0, 27]
-            // Map y_m [-7.6, +7.6] -> row [0, 14]
             const col = Math.min(GRID_COLS - 1, Math.max(0, Math.floor(((data.x_m + COURT_LENGTH_M / 2) / COURT_LENGTH_M) * GRID_COLS)));
             const row = Math.min(GRID_ROWS - 1, Math.max(0, Math.floor(((data.y_m + COURT_WIDTH_M / 2) / COURT_WIDTH_M) * GRID_ROWS)));
             
@@ -667,11 +710,9 @@ const char* AnalyticsServer::GetIndexHtml()
                 maxHeatCount = heatmapGrid[col][row];
             }
 
-            // Append to position trail dots (keep last 300 real-time dots)
             positionDots.push({ x: data.x_m, y: data.y_m, color: playerColor });
             if (positionDots.length > 300) positionDots.shift();
 
-            // Re-render 2D Court Canvas
             drawCourt();
         };
     </script>
