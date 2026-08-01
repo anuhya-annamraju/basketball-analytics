@@ -1,5 +1,7 @@
 #include "StreamProcessor.hpp"
 #include <filesystem>
+#include <thread>
+#include <chrono>
 
 namespace fs = std::filesystem;
 
@@ -20,6 +22,8 @@ void StreamProcessor::StreamData()
             for (const auto& listener : _listeners) {                                                                                           
                 listener(snapshot.value());                                                                                                     
             }                                                                                                                                   
+            // Pacing delay (40ms) to simulate real-time playback streaming
+            std::this_thread::sleep_for(std::chrono::milliseconds(40));
         }                                                                                                                                       
     }    
 }

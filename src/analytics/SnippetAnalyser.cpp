@@ -28,6 +28,11 @@ void SnippetAnalyser::AnalyseSnippet(PlayerSnapshot snapshot){
 
     //From current snapshot calculate heatmap grid index from position
     UpdateHeatMapGrid(playerAnalytics.prev_pos,groupAnalytics);
+
+    // Notify registered analytics listeners (e.g., WebServer telemetry broadcast)
+    for (const auto& cb : _analyticsCallbacks) {
+        cb(snapshot, playerAnalytics);
+    }
 }
 
 void SnippetAnalyser::DisplayAnalytics()
@@ -51,10 +56,7 @@ void SnippetAnalyser::DisplayAnalytics()
     }
 }
 
-void SnippetAnalyser::GetOverallAnalytics()
-{
-   
-}
+void SnippetAnalyser::GetOverallAnalytics(){}
 
 void SnippetAnalyser::CalculateHeatMap(const GroupAnalytics& groupAnalytics){
     // if total no of samples is 100% - then calculate value of each heatmap grid in % 

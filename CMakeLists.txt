@@ -10,10 +10,12 @@ set(SOURCES
     src/reader/PlayerSnapshotReader.cpp
     src/analytics/SnippetAnalyser.cpp
     src/streamprocessor/StreamProcessor.cpp
+    src/web/AnalyticsServer.cpp
 )
 set(HEADERS
     src/definitions/Definitions.hpp
     src/utils/PhysicsUtils.hpp
+    src/web/AnalyticsServer.hpp
 )
 
 include_directories(
@@ -22,10 +24,12 @@ include_directories(
     src/analytics
     src/streamprocessor
     src/utils
+    src/web
 )
 
 add_library(basketball-lib ${SOURCES} ${HEADERS})
 add_executable(basketball-app src/main.cpp)
+target_link_libraries(basketball-lib PUBLIC httplib::httplib)
 target_link_libraries(basketball-app PRIVATE basketball-lib)
 
 # Testing setup with doctest
@@ -40,3 +44,15 @@ FetchContent_MakeAvailable(doctest)
 enable_testing()
 add_executable(unit_tests tests/TestAnalyticsAlgorithms.cpp)
 target_link_libraries(unit_tests PRIVATE basketball-lib doctest::doctest)
+
+# Add cpp-httplib for cross-platform web server
+FetchContent_Declare(
+    httplib
+    GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+    GIT_TAG v0.15.3
+)
+FetchContent_MakeAvailable(httplib)
+
+if(WIN32)
+    target_link_libraries(basketball-lib PUBLIC ws2_32 crypt32)
+endif()
