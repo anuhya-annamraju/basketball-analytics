@@ -24,13 +24,29 @@ The app is designed in modular way that focuses on Single Responsibility Proncip
 
 
 ## How to run it 
-- **On Linux/WSL**
-
-- **On Mac** - uses makefiles and gcc with cmake
-`cmake --preset release` 
+- **On Linux/WSL && Mac** - uses makefiles and gcc with cmake
+`cmake --preset release` <br>
 `cmake --build --preset release`                                                                                                  
 
+
+After successfully building, navigate to the build folder and launch 
+`./basketball-app ../snippets/scippet1.csv`
+and launch  http://localhost:12345
+
+**For Unit tests**
+`./unit_tests`
+
 - **On Windows**
+    
+In powershell type 
+`cmake --preset msvc-release` <br>
+`cmake --build --preset msvc-release`                                                                                                  
+                                                                                                             
+After successfully building, navigate to the build folder and run
+`./basketball-app.exe ../snippets/scippet1.csv`
+and launch  http://localhost:12345
 
+**For Unit tests**
+`./unit_tests.exe`    
 
-
+Use Ctrl+c to stop the app
