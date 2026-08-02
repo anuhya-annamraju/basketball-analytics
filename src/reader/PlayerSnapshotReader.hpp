@@ -3,14 +3,9 @@
 #include <fstream>
 #include <string>
 #include <optional>
+#include "definitions/Definitions.hpp"
 
-struct PlayerSnapshot {
-    uint64_t timestamp_ms;
-    int player_id;
-    int group_id;
-    float x_m;
-    float y_m;
-};
+
 
 class PlayerSnapshotReader {
 public:

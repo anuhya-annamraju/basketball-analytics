@@ -17,6 +17,17 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
             }
+        },
+        {
+            "name": "msvc-release",
+            "displayName": "Release (MSVC)",
+            "description": "Build using MSVC on Windows",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build-msvc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -24,6 +35,10 @@
             "name": "release",
             "configurePreset": "release",
             "jobs": 8
+        },
+        {
+            "name": "msvc-release",
+            "configurePreset": "msvc-release"
         }
     ]
 }
