@@ -4,20 +4,58 @@ project(basketball-cpp-challenge VERSION 1.0)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(SOURCES
-    src/reader/playersnapshotreader.cpp
+    src/reader/PlayerSnapshotReader.cpp
+    src/analytics/SnippetAnalyser.cpp
+    src/streamprocessor/StreamProcessor.cpp
+    src/web/AnalyticsServer.cpp
 )
 set(HEADERS
-    src/reader/playersnapshotreader.hpp
+    src/definitions/Definitions.hpp
+    src/utils/PhysicsUtils.hpp
+    src/web/AnalyticsServer.hpp
 )
+
 include_directories(
+    src
     src/reader
+    src/analytics
+    src/streamprocessor
+    src/utils
+    src/web
 )
 
 add_library(basketball-lib ${SOURCES} ${HEADERS})
 add_executable(basketball-app src/main.cpp)
+target_link_libraries(basketball-lib PUBLIC httplib::httplib)
 target_link_libraries(basketball-app PRIVATE basketball-lib)
 
-# Installation rules (optional)
-#install(TARGETS basketball-app DESTINATION bin)
+# Testing setup with doctest
+include(FetchContent)
+FetchContent_Declare(
+    doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG v2.5.3
+)
+FetchContent_MakeAvailable(doctest)
+
+enable_testing()
+add_executable(unit_tests
+    tests/TestAnalyticsAlgorithms.cpp
+    tests/TestHeatMapAnalytics.cpp
+)
+target_link_libraries(unit_tests PRIVATE basketball-lib doctest::doctest)
+
+# Add cpp-httplib for cross-platform web server
+FetchContent_Declare(
+    httplib
+    GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+    GIT_TAG v0.15.3
+)
+FetchContent_MakeAvailable(httplib)
+
+if(WIN32)
+    target_link_libraries(basketball-lib PUBLIC ws2_32 crypt32)
+endif()
